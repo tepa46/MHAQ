@@ -33,6 +33,8 @@ class LVisionOD(pl.LightningModule):
             self.mAP = torchmetrics.detection.MeanAveragePrecision(box_format="xyxy")
 
         self.optimizer = setup["optimizer"]
+        self.scheduler_cls = setup.get("scheduler_cls")
+        self.scheduler_params = setup.get("scheduler_params", {}) or {}
         self.metrics = []
 
         self.lr = setup["lr"]
@@ -116,7 +118,18 @@ class LVisionOD(pl.LightningModule):
         self.metrics.append(["mAP", self.mAP])
 
     def configure_optimizers(self):
-        return self.optimizer(self.parameters(), self.lr)
+        opt = self.optimizer(self.parameters(), self.lr)
+        if self.scheduler_cls is None:
+            return opt
+        from src.training.lr_schedulers import build_scheduler
+        sched = build_scheduler(
+            self.scheduler_cls, opt, self.scheduler_params,
+            total_steps=int(self.trainer.estimated_stepping_batches),
+        )
+        return {
+            "optimizer": opt,
+            "lr_scheduler": {"scheduler": sched, "interval": "step"},
+        }
 
     def forward(self, inputs):
         return self.model(inputs)

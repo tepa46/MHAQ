@@ -2,6 +2,7 @@ import os
 import lightning.pytorch as pl
 import torch
 import src.models as compose_models
+import src.training.lr_schedulers as compose_lr_schedulers
 
 from collections import OrderedDict
 from torch import nn, optim
@@ -26,6 +27,8 @@ class ModelComposer():
         self.model: nn.Module
         self.criterion: _Loss
         self.optimizer: Optimizer
+        self.scheduler_cls = None
+        self.scheduler_params: dict = {}
         self.lr: float = 1e-4
 
     def compose(self) -> pl.LightningModule:
@@ -39,6 +42,12 @@ class ModelComposer():
             self.criterion = get_criterion(criterion_name=training_config.criterion, model=self.model)
             self.optimizer = getattr(optim, training_config.optimizer)
             self.lr = training_config.learning_rate
+
+            if training_config.scheduler is not None:
+                self.scheduler_cls = getattr(
+                    compose_lr_schedulers, training_config.scheduler.name
+                )
+                self.scheduler_params = training_config.scheduler.params or {}
 
             if model_config.cpt_url:
                 if "file://" in model_config.cpt_url:

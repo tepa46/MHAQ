@@ -1,8 +1,13 @@
+import inspect
+
 import torch.nn as nn
 import torch.optim as optim
+from torch.optim.lr_scheduler import LRScheduler
+
 import src.models as compose_models
 import src.callbacks as compose_callbacks
 import src.quantization as compose_quantization
+import src.training.lr_schedulers as compose_lr_schedulers
 from src.aux.types import QScheme, QMethod
 from src.quantization.gdnsq.config.config_schema import GDNSQQuantizerParams
 
@@ -23,6 +28,11 @@ class Logger(BaseModel):
     params: Optional[Dict]
 
 
+class SchedulerConfig(BaseModel):
+    name: str
+    params: Optional[Dict] = None
+
+
 class TrainingConfig(BaseModel):
     criterion: str | List[str]
     optimizer: str
@@ -31,6 +41,7 @@ class TrainingConfig(BaseModel):
     val_every_n_epochs: Optional[int] = 1
     val_check_interval: Optional[float] = None
     log_every_n_steps: Optional[int] = None
+    scheduler: Optional[SchedulerConfig] = None
     callbacks: Optional[Dict[str, Callback]] = []
     loggers: Optional[Dict[str, Logger]] = []
 
@@ -90,6 +101,18 @@ class ConfigSchema(BaseModel):
         for callback in v.callbacks:
             if not hasattr(compose_callbacks, callback):
                 raise ValueError(f"Invalid callback: {callback}")
+        if v.scheduler is not None:
+            cls = getattr(compose_lr_schedulers, v.scheduler.name, None)
+            if (
+                not inspect.isclass(cls)
+                or not issubclass(cls, LRScheduler)
+                or cls is LRScheduler
+            ):
+                raise ValueError(
+                    f"Invalid scheduler: {v.scheduler.name}. "
+                    f"Must be a concrete LRScheduler subclass exposed by "
+                    f"src.training.lr_schedulers."
+                )
         return v
 
     @field_validator("model")

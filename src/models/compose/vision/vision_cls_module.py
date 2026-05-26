@@ -13,6 +13,8 @@ class LVisionCls(pl.LightningModule):
         self.model = setup["model"]
         self.criterion = setup["criterion"]
         self.optimizer = setup["optimizer"]
+        self.scheduler_cls = setup.get("scheduler_cls")
+        self.scheduler_params = setup.get("scheduler_params", {}) or {}
         self.metrics = []
         self.acc_metric_top_1 = torchmetrics.Accuracy(
             task="multiclass",
@@ -52,7 +54,18 @@ class LVisionCls(pl.LightningModule):
         self.metrics.append(["Accuracy_top5", self.acc_metric_top_5])
 
     def configure_optimizers(self):
-        return self.optimizer(self.parameters(), self.lr)
+        opt = self.optimizer(self.parameters(), self.lr)
+        if self.scheduler_cls is None:
+            return opt
+        from src.training.lr_schedulers import build_scheduler
+        sched = build_scheduler(
+            self.scheduler_cls, opt, self.scheduler_params,
+            total_steps=int(self.trainer.estimated_stepping_batches),
+        )
+        return {
+            "optimizer": opt,
+            "lr_scheduler": {"scheduler": sched, "interval": "step"},
+        }
 
     def forward(self, inputs):
         return self.model(inputs)

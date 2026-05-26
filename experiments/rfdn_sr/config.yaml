@@ -11,6 +11,14 @@ training:
   max_epochs: 1000
   val_every_n_epochs: 1
   log_every_n_steps: 10
+  scheduler:
+    name: QuantizationLR
+    params:
+      warmup: 500
+      scale_lr: 1.0
+      scale_anneal: 0.9999
+      lr_schedule: exponential
+      min_lr_ratio: 0.01
   callbacks:
     PrintSrMetrics:
       params:
@@ -28,9 +36,10 @@ training:
         filename: gdnsq_checkpoint-{epoch:02d}-"{PSNR/Weighted_mean:.4f}"
     TemperatureScale:
       params:
-        scale_lr: 1
-        scale_anneal: 0.9999
+        scale_t: 2
         warmup: 500
+    ConvergenceTrigger:
+      params: {}
 
 
 data:

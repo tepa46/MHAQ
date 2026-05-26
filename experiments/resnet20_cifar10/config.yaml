@@ -12,6 +12,14 @@ training:
   max_epochs: 1000
   val_every_n_epochs: 1
   log_every_n_steps: 10
+  scheduler:
+    name: QuantizationLR
+    params:
+      warmup: 1000
+      scale_lr: 1.0
+      scale_anneal: 0.9985
+      lr_schedule: exponential
+      min_lr_ratio: 0.01
   callbacks:
     PrintClassificationMetrics:
       params:
@@ -29,8 +37,10 @@ training:
         filename: gdnsq_checkpoint-{epoch:02d}-"{Metric/top-1:.2f}"
     TemperatureScale:
       params:
-        scale_lr: 1
+        scale_t: 2
         warmup: 1000
+    ConvergenceTrigger:
+      params: {}
 data:
   dataset_name: CIFAR10
   batch_size: 1000
