@@ -10,6 +10,12 @@ LR_CONF=(
     0.002
 )
 
+QNMETHOD_CONF=(
+    "AEWGS"
+    "STE"
+    "LSQ"
+)
+
 GRAD_NOISE_CONF=(
     "BER3"
     "BER1"
@@ -37,15 +43,18 @@ for cfg in "${CONFIGS[@]}"; do
     echo "Logs   : ${logs_folder}"
     echo "============================================================"
 
-    for grad_noise in "${GRAD_NOISE_CONF[@]}"; do
-        for lr in "${LR_CONF[@]}"; do
-            for run_idx in $(seq 1 "${RUNS_PER_PAIR}"); do
-                echo "  [run ${run_idx}/${RUNS_PER_PAIR}] grad_noise=${grad_noise}  lr=${lr}"
-                python -m scripts.gdnsq_q_config_v2 \
-                    --config        "${cfg}" \
-                    --grad-noise    "${grad_noise}" \
-                    --lr            "${lr}" \
-                    --mitrics-folder "${logs_folder}"
+    for qnmethod in "${QNMETHOD_CONF[@]}"; do
+        for grad_noise in "${GRAD_NOISE_CONF[@]}"; do
+            for lr in "${LR_CONF[@]}"; do
+                for run_idx in $(seq 1 "${RUNS_PER_PAIR}"); do
+                    echo "  [run ${run_idx}/${RUNS_PER_PAIR}] qnmethod=${qnmethod}  grad_noise=${grad_noise}  lr=${lr}"
+                    python -m scripts.gdnsq_q_config_v2 \
+                        --config        "${cfg}" \
+                        --qnmethod      "${qnmethod}" \
+                        --grad-noise    "${grad_noise}" \
+                        --lr            "${lr}" \
+                        --mitrics-folder "${logs_folder}"
+                done
             done
         done
     done

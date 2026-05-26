@@ -58,4 +58,3 @@ quantization:
   params:
     distillation: True
     distillation_loss: L1
-    qnmethod: STE

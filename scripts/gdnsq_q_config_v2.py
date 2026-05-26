@@ -69,7 +69,7 @@ def _override_metrics_log_filenames(config, grad_noise: str, logs_folder: str, l
 
 
 
-def _apply_cli_overrides(config, grad_noise: str | None, logs_folder: str | None, lr_value: float | None) -> None:
+def _apply_cli_overrides(config, grad_noise: str | None, logs_folder: str | None, lr_value: float | None, qnmethod: str | None) -> None:
     params = getattr(config.quantization, "params", None)
     if params is None:
         raise ValueError("Quantization params are required for CLI overrides.")
@@ -78,13 +78,17 @@ def _apply_cli_overrides(config, grad_noise: str | None, logs_folder: str | None
         params.grad_noise = grad_noise
         logger.info(f"Override grad_noise from CLI: {grad_noise}")
 
+    if qnmethod is not None:
+        params.qnmethod = qnmethod
+        logger.info(f"Override qnmethod from CLI: {qnmethod}")
+
     if lr_value is not None:
         config.training.learning_rate = lr_value
         logger.info(f"Override learning_rate from CLI: {lr_value}")
 
     if logs_folder is not None:
         _override_metrics_log_filenames(config, params.grad_noise, logs_folder, config.training.learning_rate)
-        logger.info(f"Override metrics logs folder from CLI: {logs_folder}; noise={params.grad_noise}; lr={config.training.learning_rate}")        
+        logger.info(f"Override metrics logs folder from CLI: {logs_folder}; noise={params.grad_noise}; lr={config.training.learning_rate}")
 
 
 def parse_args():
@@ -114,6 +118,14 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--qnmethod",
+        type=str,
+        required=False,
+        help="Override quantization method: STE, AEWGS, LSQ.",
+        default=None,
+    )
+
+    parser.add_argument(
         "--mitrics-folder",
         type=str,
         required=False,
@@ -127,7 +139,7 @@ def parse_args():
 def main():
     args = parse_args()
     config = load_and_validate_config(args.config)
-    _apply_cli_overrides(config, args.grad_noise, args.mitrics_folder, args.learning_rate)
+    _apply_cli_overrides(config, args.grad_noise, args.mitrics_folder, args.learning_rate, args.qnmethod)
     run(config)
     
 
