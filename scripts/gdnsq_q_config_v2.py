@@ -67,9 +67,14 @@ def _override_metrics_log_filenames(config, grad_noise: str, logs_folder: str, l
             continue
         callback.params["filename"] = _build_metrics_log_path(logs_folder, grad_noise, lr_value)
 
-
-
-def _apply_cli_overrides(config, grad_noise: str | None, logs_folder: str | None, lr_value: float | None, qnmethod: str | None) -> None:
+def _apply_cli_overrides(
+    config,
+    grad_noise: str | None,
+    logs_folder: str | None,
+    lr_value: float | None,
+    qnmethod: str | None,
+    lr_schedule: str | None,
+) -> None:
     params = getattr(config.quantization, "params", None)
     if params is None:
         raise ValueError("Quantization params are required for CLI overrides.")
@@ -85,6 +90,18 @@ def _apply_cli_overrides(config, grad_noise: str | None, logs_folder: str | None
     if lr_value is not None:
         config.training.learning_rate = lr_value
         logger.info(f"Override learning_rate from CLI: {lr_value}")
+
+    if lr_schedule is not None:
+        callbacks = getattr(config.training, "callbacks", {}) or {}
+        temperature_scale = callbacks.get("TemperatureScale")
+        if temperature_scale is None:
+            raise ValueError(
+                "TemperatureScale callback is required for --lr-schedule override."
+            )
+        if temperature_scale.params is None:
+            temperature_scale.params = {}
+        temperature_scale.params["lr_schedule"] = lr_schedule
+        logger.info(f"Override TemperatureScale lr_schedule from CLI: {lr_schedule}")
 
     if logs_folder is not None:
         _override_metrics_log_filenames(config, params.grad_noise, logs_folder, config.training.learning_rate)
@@ -126,6 +143,15 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--lr-schedule",
+        type=str,
+        choices=("exponential", "cosine"),
+        required=False,
+        help="Override TemperatureScale learning-rate schedule.",
+        default=None,
+    )
+
+    parser.add_argument(
         "--mitrics-folder",
         type=str,
         required=False,
@@ -139,7 +165,14 @@ def parse_args():
 def main():
     args = parse_args()
     config = load_and_validate_config(args.config)
-    _apply_cli_overrides(config, args.grad_noise, args.mitrics_folder, args.learning_rate, args.qnmethod)
+    _apply_cli_overrides(
+        config,
+        args.grad_noise,
+        args.mitrics_folder,
+        args.learning_rate,
+        args.qnmethod,
+        args.lr_schedule,
+    )
     run(config)
     
 
