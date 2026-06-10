@@ -129,14 +129,14 @@ class QNAEWGS(QNoise):
             den = (e2 - me.square()).clamp_min(eps)
             #den0 = 1.0 / 12.0
             delta = num / den
-            
+
             gap = 0.01
             m = 1.0
             # prevent gradient vanish
-            g_scale = (m * delta * num_full).clamp_max(1-gap) 
-            
+            g_scale = (m * delta * num_full).clamp_max(1-gap)
+
             grad_input = -grad_output * g_scale
-        
+
         if ctx.needs_input_grad[1]:
             grad_scale = compute_grad_scale(ctx.grad_noise_type, input, grad_output)
 

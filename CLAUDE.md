@@ -17,4 +17,3 @@
 * Do not commit or push changes unless explicitly asked.
 
 ## Development
-

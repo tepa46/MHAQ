@@ -110,9 +110,9 @@ def _apply_cli_overrides(
 def parse_args():
     parser = argparse.ArgumentParser(description="Run GDNSQ quantization.")
     parser.add_argument(
-        "--config", 
-        type=str, 
-        required=False, 
+        "--config",
+        type=str,
+        required=False,
         help="Path to the configuration file (YAML).",
         default="config/gdnsq_config_rfdn.yaml"
     )
@@ -157,7 +157,7 @@ def parse_args():
         help="Base folder for metrics logs. Final path: mitrics-folder/noise/lr_XXX[_X].log",
         default="metrics_logs"
     )
-    
+
     return parser.parse_args()
 
 
@@ -173,7 +173,7 @@ def main():
         args.lr_schedule,
     )
     run(config)
-    
+
 
 if __name__ == "__main__":
     main()

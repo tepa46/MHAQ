@@ -92,7 +92,6 @@ def _apply_cli_overrides(
         logger.info(f"Override learning_rate from CLI: {lr_value}")
 
     if lr_schedule is not None:
-<<<<<<< HEAD
         scheduler = getattr(config.training, "scheduler", None)
         if scheduler is None:
             raise ValueError(
@@ -102,18 +101,6 @@ def _apply_cli_overrides(
             scheduler.params = {}
         scheduler.params["lr_schedule"] = lr_schedule
         logger.info(f"Override scheduler lr_schedule from CLI: {lr_schedule}")
-=======
-        callbacks = getattr(config.training, "callbacks", {}) or {}
-        temperature_scale = callbacks.get("TemperatureScale")
-        if temperature_scale is None:
-            raise ValueError(
-                "TemperatureScale callback is required for --lr-schedule override."
-            )
-        if temperature_scale.params is None:
-            temperature_scale.params = {}
-        temperature_scale.params["lr_schedule"] = lr_schedule
-        logger.info(f"Override TemperatureScale lr_schedule from CLI: {lr_schedule}")
->>>>>>> 563d749 (feat: Add CosAnnealing)
 
     if logs_folder is not None:
         _override_metrics_log_filenames(config, params.grad_noise, logs_folder, config.training.learning_rate)
@@ -123,9 +110,9 @@ def _apply_cli_overrides(
 def parse_args():
     parser = argparse.ArgumentParser(description="Run GDNSQ quantization.")
     parser.add_argument(
-        "--config", 
-        type=str, 
-        required=False, 
+        "--config",
+        type=str,
+        required=False,
         help="Path to the configuration file (YAML).",
         default="config/gdnsq_config_rfdn.yaml"
     )
@@ -159,11 +146,7 @@ def parse_args():
         type=str,
         choices=("exponential", "cosine"),
         required=False,
-<<<<<<< HEAD
         help="Override training.scheduler learning-rate schedule.",
-=======
-        help="Override TemperatureScale learning-rate schedule.",
->>>>>>> 563d749 (feat: Add CosAnnealing)
         default=None,
     )
 
@@ -174,7 +157,7 @@ def parse_args():
         help="Base folder for metrics logs. Final path: mitrics-folder/noise/lr_XXX[_X].log",
         default="metrics_logs"
     )
-    
+
     return parser.parse_args()
 
 
@@ -190,7 +173,7 @@ def main():
         args.lr_schedule,
     )
     run(config)
-    
+
 
 if __name__ == "__main__":
     main()
