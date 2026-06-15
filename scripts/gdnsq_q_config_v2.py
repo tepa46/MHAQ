@@ -39,10 +39,20 @@ def _normalize_lr_value(lr_value: float | str) -> str:
     return INVALID_FILENAME_CHARS_PATTERN.sub("_", lr_text)
 
 
-def _build_metrics_log_path(logs_folder: str, grad_noise: str, lr_value: float | str) -> str:
+def _resolve_lr_schedule(config) -> str:
+    callbacks = getattr(config.training, "callbacks", {}) or {}
+    if not isinstance(callbacks, dict):
+        return "exponential"
+    temperature_scale = callbacks.get("TemperatureScale")
+    if temperature_scale is None or temperature_scale.params is None:
+        return "exponential"
+    return str(temperature_scale.params.get("lr_schedule", "exponential")).lower()
+
+
+def _build_metrics_log_path(logs_folder: str, grad_noise: str, lr_value: float | str, lr_schedule: str) -> str:
     noise_folder = LOG_FOLDER_BY_GRAD_NOISE[grad_noise]
     lr_suffix = _normalize_lr_value(lr_value)
-    target_dir = Path(logs_folder) / noise_folder
+    target_dir = Path(logs_folder) / lr_schedule / noise_folder
     target_dir.mkdir(parents=True, exist_ok=True)
 
     base_name = f"{LR_FILENAME_PREFIX}{lr_suffix}"
@@ -61,11 +71,12 @@ def _override_metrics_log_filenames(config, grad_noise: str, logs_folder: str, l
     if not isinstance(callbacks, dict):
         return
 
+    lr_schedule = _resolve_lr_schedule(config)
     for callback_name in LOG_CALLBACK_NAMES:
         callback = callbacks.get(callback_name)
         if callback is None or callback.params is None:
             continue
-        callback.params["filename"] = _build_metrics_log_path(logs_folder, grad_noise, lr_value)
+        callback.params["filename"] = _build_metrics_log_path(logs_folder, grad_noise, lr_value, lr_schedule)
 
 def _apply_cli_overrides(
     config,

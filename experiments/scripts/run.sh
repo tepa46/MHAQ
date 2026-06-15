@@ -5,30 +5,25 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 
 LR_CONF=(
-    0.02
-    0.01
-    0.002
+    0.001
 )
 
 QNMETHOD_CONF=(
-    "AEWGS"
     "STE"
-    "LSQ"
 )
 
 GRAD_NOISE_CONF=(
     "BER3"
-    "BER1"
-    "NORM3"
-    "NORM1"
-    "UNIFORM"
-    "ROUNDING"
+    # "BER1"
+    # "NORM3"
+    # "NORM1"
+    # "UNIFORM"
+    # "ROUNDING"
 )
 
 CONFIGS=(
-    "experiments/rfdn_sr/config.yaml"
+    "experiments/resnet20_cifar10/config_cosine.yaml"
     "experiments/resnet20_cifar10/config.yaml"
-    "experiments/resnet20_cifar100/config.yaml"
 )
 
 RUNS_PER_PAIR=5
